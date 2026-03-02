@@ -1,5 +1,7 @@
 # Automated Quiz Engine with PDF Certification
 
+Milestone Project - I (Full Stack Application Development)
+
 A full-stack quiz platform for teachers and students, built with Node.js, Express, MySQL, and Redis (optional).
 
 ## Features
