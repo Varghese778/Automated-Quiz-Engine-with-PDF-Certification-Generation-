@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Portal — QuizEngine</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">Q</div>
+                <h2>Quiz<span>Engine</span></h2>
+            </a>
+            <button class="menu-toggle" onclick="document.querySelector('.nav-menu').classList.toggle('active')" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="teacher-auth.html" class="nav-link active">For Teachers</a></li>
+                <li><a href="student-access.html" class="nav-link">For Students</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="auth-container">
+            <!-- Login Form -->
+            <div id="login-section" class="auth-section active">
+                <h2>Welcome back</h2>
+                <p class="auth-subtitle">Sign in to your teacher account</p>
+                <div id="login-error" class="error-message"></div>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" placeholder="you@school.edu" required autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+                            <button type="button" class="password-toggle" onclick="togglePassword('login-password', this)" aria-label="Show password">👁</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%">Sign In</button>
+                    <p class="form-text">Don't have an account? <a href="#" onclick="toggleForms(); return false;">Create one</a></p>
+                </form>
+            </div>
+
+            <!-- Registration Form -->
+            <div id="register-section" class="auth-section">
+                <h2>Create account</h2>
+                <p class="auth-subtitle">Get started with your free teacher account</p>
+                <div id="register-error" class="error-message"></div>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="register-name">Full Name</label>
+                        <input type="text" id="register-name" placeholder="Dr. Jane Smith" required autocomplete="name">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-email">Email</label>
+                        <input type="email" id="register-email" placeholder="you@school.edu" required autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="register-password">Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="register-password" placeholder="Min 8 characters" required autocomplete="new-password" minlength="8">
+                            <button type="button" class="password-toggle" onclick="togglePassword('register-password', this)" aria-label="Show password">👁</button>
+                        </div>
+                        <div class="password-strength" id="password-strength">
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                            <div class="bar"></div>
+                        </div>
+                        <p class="password-hint" id="password-hint">Use at least 8 characters</p>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width:100%">Create Account</button>
+                    <p class="form-text">Already have an account? <a href="#" onclick="toggleForms(); return false;">Sign in</a></p>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026 QuizEngine. Built with ❤️ for educators everywhere.</p>
+    </footer>
+
+    <div class="toast-container" id="toast-container"></div>
+    <script src="teacher-auth.js"></script>
+</body>
+</html>

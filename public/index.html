@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Engine — Create, Share & Assess</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">Q</div>
+                <h2>Quiz<span>Engine</span></h2>
+            </a>
+            <button class="menu-toggle" onclick="document.querySelector('.nav-menu').classList.toggle('active')" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link active">Home</a></li>
+                <li><a href="teacher-auth.html" class="nav-link">For Teachers</a></li>
+                <li><a href="student-access.html" class="nav-link">For Students</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="hero">
+        <div class="hero-content">
+            <div class="hero-badge">✨ Free & Open Source</div>
+            <h1>The Simplest Way to Create & Share Quizzes</h1>
+            <p>Build professional assessments in minutes, share with a unique access code, and get instant results — no student registration needed.</p>
+            <div class="hero-buttons">
+                <a href="teacher-auth.html" class="btn btn-white">Start Creating Quizzes →</a>
+                <a href="student-access.html" class="btn btn-outline">I Have an Access Code</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="features">
+        <div class="container">
+            <h2>How It Works</h2>
+            <p class="section-subtitle">Two simple flows — one for teachers, one for students</p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">👩‍🏫</div>
+                    <h3>For Teachers</h3>
+                    <ul>
+                        <li>Create unlimited quizzes with custom passing scores</li>
+                        <li>Add multiple-choice questions with ease</li>
+                        <li>Generate unique, shareable access codes</li>
+                        <li>Set expiration dates for timed assessments</li>
+                        <li>View detailed student results & analytics</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎓</div>
+                    <h3>For Students</h3>
+                    <ul>
+                        <li>Enter your teacher's access code — no signup</li>
+                        <li>Clean, focused quiz-taking interface</li>
+                        <li>Navigate freely between questions</li>
+                        <li>Get instant scores and pass/fail results</li>
+                        <li>Download a PDF certificate when you pass</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026 QuizEngine. Built with ❤️ for educators everywhere.</p>
+    </footer>
+
+    <script>
+        // Navbar scroll effect
+        window.addEventListener('scroll', () => {
+            document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 10);
+        });
+    </script>
+</body>
+</html>

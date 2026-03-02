@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Take a Quiz - Quiz Engine</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="logo-icon">📝</span>
+                <h2>Quiz Engine</h2>
+            </div>
+            <button class="menu-toggle" onclick="document.querySelector('.nav-menu').classList.toggle('active')" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="teacher-auth.html" class="nav-link">For Teachers</a></li>
+                <li><a href="student-access.html" class="nav-link active">For Students</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="student-access-container">
+            <div class="auth-header">
+                <h1>🎓 Take a Quiz</h1>
+                <p class="auth-subtitle">Enter your teacher's access code to begin the assessment</p>
+            </div>
+
+            <form id="access-code-form" class="access-code-form">
+                <div id="access-error" class="error-message"></div>
+                <div class="form-group">
+                    <label for="student-name">Your Name</label>
+                    <input type="text" id="student-name" placeholder="Enter your full name" minlength="2" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="access-code">Access Code</label>
+                    <input type="text" id="access-code" placeholder="e.g. AB12CD34" maxlength="8" style="text-transform:uppercase; letter-spacing: 3px; font-size: 1.2rem; text-align: center; font-weight: 600;" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full" id="access-btn">🚀 Start Quiz</button>
+            </form>
+
+            <div class="info-box" style="margin-top: 2rem; background: var(--bg-secondary); border-radius: var(--radius-lg); padding: 1.5rem;">
+                <h3>📋 How it works</h3>
+                <ol style="margin-top: 0.75rem; padding-left: 1.25rem; color: var(--text-secondary); line-height: 1.8;">
+                    <li>Ask your teacher for an access code</li>
+                    <li>Enter your name and the code above</li>
+                    <li>Answer all the questions</li>
+                    <li>Submit and get instant results</li>
+                    <li>Download your certificate if you pass! 🎉</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <footer class="footer">
+        <p>&copy; 2026 Quiz Engine. All rights reserved.</p>
+    </footer>
+
+    <script src="student-access.js"></script>
+</body>
+</html>

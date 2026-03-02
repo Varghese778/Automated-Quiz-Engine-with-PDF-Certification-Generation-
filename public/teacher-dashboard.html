@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — QuizEngine</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">Q</div>
+                <h2>Quiz<span>Engine</span></h2>
+            </a>
+            <button class="menu-toggle" onclick="document.querySelector('.nav-menu').classList.toggle('active')" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="teacher-dashboard.html" class="nav-link active">Dashboard</a></li>
+                <li><a href="#" onclick="logout(); return false;" class="nav-link nav-logout">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container teacher-container">
+        <!-- Stats Cards -->
+        <div class="stats-grid" id="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📋</div>
+                <div class="stat-value" id="stat-quizzes">-</div>
+                <div class="stat-label">Quizzes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">❓</div>
+                <div class="stat-value" id="stat-questions">-</div>
+                <div class="stat-label">Questions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-value" id="stat-attempts">-</div>
+                <div class="stat-label">Attempts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏆</div>
+                <div class="stat-value" id="stat-passed">-</div>
+                <div class="stat-label">Passed</div>
+            </div>
+        </div>
+
+        <div class="dashboard-header">
+            <h1>Welcome, <span id="teacher-name"></span></h1>
+            <button onclick="showCreateQuizModal()" class="btn btn-primary">+ New Quiz</button>
+        </div>
+
+        <div id="quizzes-section">
+            <div class="section-header">
+                <h2>Your Quizzes</h2>
+            </div>
+            <div id="quizzes-list" class="quizzes-grid">
+                <div class="loading"><div class="spinner"></div>Loading quizzes...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Quiz Modal -->
+    <div id="create-quiz-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Create New Quiz</h2>
+                <button class="close" onclick="closeCreateQuizModal()">&times;</button>
+            </div>
+            <div id="create-quiz-error" class="error-message"></div>
+            <form id="create-quiz-form">
+                <div class="form-group">
+                    <label for="quiz-title">Quiz Title</label>
+                    <input type="text" id="quiz-title" placeholder="e.g., Python Basics Final" required>
+                </div>
+                <div class="form-group">
+                    <label for="quiz-description">Description (optional)</label>
+                    <textarea id="quiz-description" placeholder="Brief description of this quiz" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="quiz-passing-score">Passing Score (%)</label>
+                    <input type="number" id="quiz-passing-score" value="75" min="1" max="100" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%">Create Quiz</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Access Code Modal -->
+    <div id="access-code-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Access Codes — <span id="modal-quiz-title"></span></h2>
+                <button class="close" onclick="closeAccessCodeModal()">&times;</button>
+            </div>
+
+            <div style="display:flex; gap:0.5rem; align-items:flex-end; margin-bottom:1rem;">
+                <div class="form-group" style="flex:1; margin-bottom:0;">
+                    <label for="expiration-date">Expiration (optional)</label>
+                    <input type="datetime-local" id="expiration-date">
+                </div>
+                <button onclick="generateAccessCode()" class="btn btn-success btn-small" style="height:40px;">Generate Code</button>
+            </div>
+
+            <div id="access-codes-list" class="access-codes-list">
+                <div class="loading"><div class="spinner"></div>Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Modal -->
+    <div id="results-modal" class="modal hidden">
+        <div class="modal-content" style="max-width:650px;">
+            <div class="modal-header">
+                <h2>Results — <span id="results-quiz-title"></span></h2>
+                <button class="close" onclick="closeResultsModal()">&times;</button>
+            </div>
+            <div id="results-content">
+                <div class="loading"><div class="spinner"></div>Loading results...</div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026 QuizEngine. Built with ❤️ for educators everywhere.</p>
+    </footer>
+
+    <div class="toast-container" id="toast-container"></div>
+    <script src="teacher-dashboard.js"></script>
+</body>
+</html>

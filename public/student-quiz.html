@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz - Quiz Engine</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="logo-icon">📝</span>
+                <h2>Quiz Engine</h2>
+            </div>
+            <button class="menu-toggle" onclick="document.querySelector('.nav-menu').classList.toggle('active')" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="student-access.html" class="nav-link">Take a Quiz</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div id="quiz-section" class="quiz-container">
+            <div class="quiz-header">
+                <h1 id="quiz-title"></h1>
+                <div class="progress-bar">
+                    <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+                </div>
+                <p id="progress-text" class="progress-text">Question 0 of 0</p>
+            </div>
+
+            <!-- Name collection removed — already collected on student-access page -->
+
+            <form id="quiz-form" class="quiz-form">
+                <div id="quiz-content">
+                    <div class="loading"><div class="spinner"></div>Loading questions...</div>
+                </div>
+                <div class="navigation-buttons" id="nav-buttons" style="display:none;">
+                    <button type="button" id="prev-btn" onclick="previousQuestion()" class="btn btn-secondary" style="display:none;">← Previous</button>
+                    <div style="flex:1;"></div>
+                    <button type="button" id="next-btn" onclick="nextQuestion()" class="btn btn-primary">Next →</button>
+                    <button type="submit" id="submit-btn" class="btn btn-success" style="display:none;">✅ Submit Quiz</button>
+                </div>
+            </form>
+
+            <div id="result-container" class="result-container hidden">
+                <div id="result-icon" class="result-icon"></div>
+                <h2 id="score-display"></h2>
+                <p id="percentage-display" class="result-percentage"></p>
+                <p id="status-display" class="result-status"></p>
+                <div class="result-actions" style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <button id="download-cert-btn" class="btn btn-success hidden">📄 Download Certificate</button>
+                    <a href="student-access.html" class="btn btn-primary">🔄 Take Another Quiz</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <footer class="footer">
+        <p>&copy; 2026 Quiz Engine. All rights reserved.</p>
+    </footer>
+
+    <script src="student-quiz.js"></script>
+</body>
+</html>

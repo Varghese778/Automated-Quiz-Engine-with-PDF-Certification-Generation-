@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Quiz - Quiz Engine</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <span class="logo-icon">📝</span>
+                <h2>Quiz Engine</h2>
+            </div>
+            <button class="menu-toggle" onclick="document.querySelector('.nav-menu').classList.toggle('active')" aria-label="Toggle menu"><span></span><span></span><span></span></button>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="teacher-dashboard.html" class="nav-link">Dashboard</a></li>
+                <li><a href="#" onclick="logout()" class="nav-link">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="quiz-creation-container">
+            <div class="section-header" style="margin-bottom: 2rem;">
+                <h1>📝 <span id="quiz-title"></span></h1>
+                <div class="quiz-stats-bar">
+                    <span class="quiz-meta-item"><span class="meta-icon">❓</span> <strong id="question-count">0</strong> Questions</span>
+                </div>
+            </div>
+
+            <!-- Add Question Form -->
+            <div class="question-editor card">
+                <h2>Add New Question</h2>
+                <div id="question-error" class="error-message"></div>
+                <form id="add-question-form">
+                    <div class="form-group">
+                        <label for="question-text">Question</label>
+                        <textarea id="question-text" placeholder="Enter your question here..." rows="3" required></textarea>
+                    </div>
+
+                    <div class="options-grid">
+                        <div class="form-group">
+                            <label for="option-a">Option A</label>
+                            <input type="text" id="option-a" placeholder="Enter option A" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="option-b">Option B</label>
+                            <input type="text" id="option-b" placeholder="Enter option B" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="option-c">Option C</label>
+                            <input type="text" id="option-c" placeholder="Enter option C" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="option-d">Option D</label>
+                            <input type="text" id="option-d" placeholder="Enter option D" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="correct-option">Correct Answer</label>
+                        <select id="correct-option" required>
+                            <option value="">Select the correct option</option>
+                            <option value="A">Option A</option>
+                            <option value="B">Option B</option>
+                            <option value="C">Option C</option>
+                            <option value="D">Option D</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" id="add-question-btn">➕ Add Question</button>
+                </form>
+            </div>
+
+            <!-- Questions List -->
+            <div class="questions-list card" style="margin-top: 2rem;">
+                <div class="section-header">
+                    <h2>Questions in This Quiz</h2>
+                </div>
+                <div id="questions-display" class="questions-display">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No questions added yet. Add your first question above!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons" style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: space-between;">
+                <a href="teacher-dashboard.html" class="btn btn-secondary">← Back to Dashboard</a>
+                <button onclick="finishQuiz()" class="btn btn-success" id="finish-btn">✅ Done — Return to Dashboard</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toast-container"></div>
+
+    <footer class="footer">
+        <p>&copy; 2026 Quiz Engine. All rights reserved.</p>
+    </footer>
+
+    <script src="quiz-creation.js"></script>
+</body>
+</html>
