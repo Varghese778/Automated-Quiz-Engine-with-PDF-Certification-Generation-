@@ -1803,6 +1803,45 @@ textarea {
 }
 
 /* ================================================
+   AI QUESTION GENERATOR
+   ================================================ */
+.ai-generator {
+    margin-top: 1.5rem;
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, var(--card-bg) 100%);
+}
+
+.ai-generator-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.ai-generator-header h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.ai-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.25rem 0.7rem;
+    border-radius: 50px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.ai-description {
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+}
+
+/* ================================================
    QUESTION HEADER (question item with delete)
    ================================================ */
 .question-header {

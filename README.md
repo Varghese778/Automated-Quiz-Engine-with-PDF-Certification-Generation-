@@ -8,14 +8,17 @@ A full-stack quiz platform for teachers and students, built with Node.js, Expres
 
 - Teacher authentication and dashboard
 - Quiz creation and management
+- AI-powered question generation (ASI:One API)
 - Student quiz access and submission flow
-- PDF certificate generation
+- Professional PDF certificate generation (purple/gold design)
 - Optional Redis-backed sessions and rate limiting
 
 ## Tech Stack
 
 - Backend: Node.js, Express
 - Database: MySQL
+- AI: ASI:One API (asi1.ai) for question generation
+- PDF: PDFKit for certificate generation
 - Caching/Sessions (optional): Redis
 - Frontend: HTML, CSS, JavaScript (served from `public/`)
 
@@ -30,6 +33,7 @@ A full-stack quiz platform for teachers and students, built with Node.js, Expres
 
 - Node.js 18+
 - MySQL server
+- ASI:One API key from [asi1.ai](https://asi1.ai) (for AI question generation)
 - Redis (optional)
 
 ## Setup
@@ -46,7 +50,7 @@ A full-stack quiz platform for teachers and students, built with Node.js, Expres
    copy .env.example .env
    ```
 
-3. Update `.env` with your MySQL credentials and other settings.
+3. Update `.env` with your MySQL credentials, ASI:One API key, and other settings.
 
 4. Import database schema into MySQL:
 

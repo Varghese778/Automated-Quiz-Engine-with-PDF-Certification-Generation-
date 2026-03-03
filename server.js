@@ -1,3 +1,4 @@
+require('dotenv').config();
 const PDFDocument = require('pdfkit');
 const express = require('express');
 const mysql = require('mysql2');
@@ -226,7 +227,7 @@ function normalizeText(value, { min = 0, max = 200, label = 'Value' } = {}) {
         throw new Error(`${label} must be at most ${max} characters`);
     }
 
-    return sanitize(cleaned);
+    return cleaned;
 }
 
 function parsePositiveInt(value) {
@@ -490,6 +491,164 @@ app.delete('/api/quiz/:quizId/question/:questionId', validateSession, asyncHandl
     }
 
     res.json({ message: 'Question deleted successfully' });
+}));
+
+const ASI_API_KEY = process.env.ASI_API_KEY || '';
+
+app.post('/api/quiz/:quizId/generate-questions', validateSession, rateLimit({ key: 'ai-generate', maxRequests: 5 }), asyncHandler(async (req, res) => {
+    if (!ASI_API_KEY) {
+        return res.status(503).json({ error: 'AI generation is not configured. Please set ASI_API_KEY.' });
+    }
+
+    const quizId = parsePositiveInt(req.params.quizId);
+    if (!quizId) {
+        return res.status(400).json({ error: 'Invalid quiz ID' });
+    }
+
+    const quizRows = await query(
+        'SELECT id FROM quizzes WHERE id = ? AND teacher_id = ? LIMIT 1',
+        [quizId, req.teacherId]
+    );
+
+    if (quizRows.length === 0) {
+        return res.status(403).json({ error: 'Quiz not found or unauthorized' });
+    }
+
+    const topic = normalizeText(req.body.topic, { min: 3, max: 200, label: 'Topic' });
+    const depth = req.body.depth;
+    const difficulty = req.body.difficulty;
+    const numberOfQuestions = parsePositiveInt(req.body.numberOfQuestions);
+
+    if (!['basic', 'intermediate', 'advanced'].includes(depth)) {
+        return res.status(400).json({ error: 'Depth must be basic, intermediate, or advanced' });
+    }
+
+    if (!['easy', 'medium', 'hard'].includes(difficulty)) {
+        return res.status(400).json({ error: 'Difficulty must be easy, medium, or hard' });
+    }
+
+    if (!numberOfQuestions || numberOfQuestions < 1 || numberOfQuestions > 20) {
+        return res.status(400).json({ error: 'Number of questions must be between 1 and 20' });
+    }
+
+    const prompt = `Generate exactly ${numberOfQuestions} multiple choice questions about "${topic}".
+
+Topic depth: ${depth} (${depth === 'basic' ? 'surface-level concepts' : depth === 'intermediate' ? 'moderate detail and understanding' : 'in-depth, expert-level knowledge'})
+Difficulty: ${difficulty} (${difficulty === 'easy' ? 'straightforward, recall-based' : difficulty === 'medium' ? 'requires understanding and application' : 'challenging, requires analysis and deep knowledge'})
+
+Rules:
+- Each question must have exactly 4 options (A, B, C, D)
+- Exactly one option must be correct
+- All 4 options must be different from each other
+- Questions should be clear and unambiguous
+- Options should be plausible (no obviously wrong answers)
+
+Respond ONLY with a JSON array, no other text. Each object must have these exact fields:
+[
+  {
+    "question_text": "The question here?",
+    "option_a": "First option",
+    "option_b": "Second option",
+    "option_c": "Third option",
+    "option_d": "Fourth option",
+    "correct_option": "A"
+  }
+]
+
+correct_option must be exactly one of: "A", "B", "C", "D"`;
+
+    let aiResponse;
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 55000);
+
+        const response = await fetch('https://api.asi1.ai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${ASI_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: 'asi1-mini',
+                messages: [
+                    { role: 'system', content: 'You are a quiz question generator. You ONLY respond with valid JSON arrays. No markdown, no explanations, just the JSON array.' },
+                    { role: 'user', content: prompt }
+                ],
+                temperature: 0.7,
+                max_tokens: 4000
+            }),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeout);
+
+        if (!response.ok) {
+            const errorBody = await response.text().catch(() => '');
+            console.error('ASI:One API error:', response.status, errorBody);
+            return res.status(502).json({ error: 'AI service returned an error. Please try again.' });
+        }
+
+        aiResponse = await response.json();
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            return res.status(504).json({ error: 'AI service timed out. Please try again with fewer questions.' });
+        }
+        console.error('ASI:One API call failed:', error.message);
+        return res.status(502).json({ error: 'Failed to connect to AI service. Please try again.' });
+    }
+
+    let generatedQuestions;
+    try {
+        let content = aiResponse.choices?.[0]?.message?.content || '';
+        content = content.trim();
+
+        const jsonMatch = content.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) {
+            throw new Error('No JSON array found in response');
+        }
+
+        generatedQuestions = JSON.parse(jsonMatch[0]);
+
+        if (!Array.isArray(generatedQuestions) || generatedQuestions.length === 0) {
+            throw new Error('Empty or invalid question array');
+        }
+    } catch (error) {
+        console.error('Failed to parse AI response:', error.message);
+        return res.status(502).json({ error: 'AI returned an invalid response. Please try again.' });
+    }
+
+    const insertedQuestions = [];
+    for (const q of generatedQuestions) {
+        try {
+            const qText = normalizeText(q.question_text, { min: 5, max: LIMITS.QUESTION_MAX, label: 'Question' });
+            const optA = normalizeText(q.option_a, { min: 1, max: LIMITS.OPTION_MAX, label: 'Option A' });
+            const optB = normalizeText(q.option_b, { min: 1, max: LIMITS.OPTION_MAX, label: 'Option B' });
+            const optC = normalizeText(q.option_c, { min: 1, max: LIMITS.OPTION_MAX, label: 'Option C' });
+            const optD = normalizeText(q.option_d, { min: 1, max: LIMITS.OPTION_MAX, label: 'Option D' });
+            const correct = (typeof q.correct_option === 'string' ? q.correct_option.trim().toUpperCase() : '');
+
+            if (!['A', 'B', 'C', 'D'].includes(correct)) continue;
+
+            const result = await query(
+                'INSERT INTO questions (quiz_id, question_text, option_a, option_b, option_c, option_d, correct_option) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [quizId, qText, optA, optB, optC, optD, correct]
+            );
+
+            insertedQuestions.push({ id: result.insertId, question_text: qText, option_a: optA, option_b: optB, option_c: optC, option_d: optD, correct_option: correct });
+        } catch {
+            continue;
+        }
+    }
+
+    if (insertedQuestions.length === 0) {
+        return res.status(502).json({ error: 'AI generated questions but none were valid. Please try again.' });
+    }
+
+    res.json({
+        message: `Successfully generated ${insertedQuestions.length} question${insertedQuestions.length > 1 ? 's' : ''}`,
+        questions: insertedQuestions,
+        count: insertedQuestions.length
+    });
 }));
 
 app.get('/api/quiz/:quizId/questions', validateSession, asyncHandler(async (req, res) => {
@@ -873,7 +1032,7 @@ app.get('/api/certificate/:resultId', rateLimit({ key: 'certificate', maxRequest
         return res.status(401).json({ error: 'Unauthorized certificate request' });
     }
 
-    const doc = new PDFDocument({ layout: 'landscape', size: 'A4' });
+    const doc = new PDFDocument({ layout: 'landscape', size: 'A4', margin: 0 });
 
     const safeName = data.candidate_name.replace(/[^a-zA-Z0-9]/g, '_').slice(0, 80) || 'student';
     res.setHeader('Content-Type', 'application/pdf');
@@ -882,67 +1041,139 @@ app.get('/api/certificate/:resultId', rateLimit({ key: 'certificate', maxRequest
 
     doc.pipe(res);
 
-    const w = doc.page.width;
-    const h = doc.page.height;
+    const w = doc.page.width;   // 841.89
+    const h = doc.page.height;  // 595.28
+    const purple = '#3B1F6E';
+    const gold = '#D4A843';
+    const darkText = '#2D2D2D';
+    const headerBottom = h * 0.35;
 
-    doc.rect(20, 20, w - 40, h - 40).lineWidth(3).stroke('#4F46E5');
-    doc.rect(30, 30, w - 60, h - 60).lineWidth(1).stroke('#C7D2FE');
+    // --- White background ---
+    doc.rect(0, 0, w, h).fill('#FFFFFF');
 
+    // --- Thin gold border/frame inset ---
     doc.save();
-    doc.lineWidth(2).strokeColor('#4F46E5');
-    doc.moveTo(40, 70).lineTo(40, 40).lineTo(70, 40).stroke();
-    doc.moveTo(w - 70, 40).lineTo(w - 40, 40).lineTo(w - 40, 70).stroke();
-    doc.moveTo(40, h - 70).lineTo(40, h - 40).lineTo(70, h - 40).stroke();
-    doc.moveTo(w - 70, h - 40).lineTo(w - 40, h - 40).lineTo(w - 40, h - 70).stroke();
+    doc.rect(18, 18, w - 36, h - 36).lineWidth(1.5).strokeColor(gold).stroke();
     doc.restore();
 
-    doc.fontSize(50).text('🏆', 0, 60, { align: 'center' });
-    doc.moveDown(0.3);
+    // --- Top-right purple header (~35% height) ---
+    doc.save();
+    doc.moveTo(w * 0.38, 0).lineTo(w, 0).lineTo(w, headerBottom).lineTo(w * 0.32, headerBottom).closePath().fill(purple);
+    doc.restore();
 
-    doc.font('Helvetica-Bold').fontSize(36).fillColor('#1F2937')
-        .text('Certificate of Achievement', { align: 'center' });
+    // --- Top-left gold diagonal triangle ---
+    doc.save();
+    doc.moveTo(0, 0).lineTo(w * 0.28, 0).lineTo(0, h * 0.15).closePath().fill(gold);
+    doc.restore();
 
-    doc.moveDown(0.5);
-    doc.font('Helvetica').fontSize(16).fillColor('#6B7280')
-        .text('This is proudly presented to', { align: 'center' });
+    // --- Gold accent stripe under triangle ---
+    doc.save();
+    doc.lineWidth(3).strokeColor(gold);
+    doc.moveTo(0, h * 0.17).lineTo(w * 0.31, 0).stroke();
+    doc.restore();
 
-    doc.moveDown(0.5);
-    doc.moveTo(w / 2 - 150, doc.y).lineTo(w / 2 + 150, doc.y).lineWidth(1).stroke('#C7D2FE');
-    doc.moveDown(0.4);
+    // --- Bottom-left purple triangle (taller) ---
+    doc.save();
+    doc.moveTo(0, h).lineTo(w * 0.18, h).lineTo(0, h * 0.80).closePath().fill(purple);
+    doc.restore();
 
-    doc.font('Helvetica-Bold').fontSize(32).fillColor('#4F46E5')
-        .text(data.candidate_name, { align: 'center' });
+    // --- Bottom-right gold bar (taller) ---
+    doc.save();
+    doc.rect(w * 0.50, h - 40, w * 0.50, 40).fill(gold);
+    doc.restore();
 
-    doc.moveDown(0.3);
-    doc.moveTo(w / 2 - 150, doc.y).lineTo(w / 2 + 150, doc.y).lineWidth(1).stroke('#C7D2FE');
+    // --- Bottom-right purple triangle (taller) ---
+    doc.save();
+    doc.moveTo(w, h).lineTo(w * 0.80, h).lineTo(w, h * 0.80).closePath().fill(purple);
+    doc.restore();
 
-    doc.moveDown(0.5);
-    doc.font('Helvetica').fontSize(16).fillColor('#4B5563')
-        .text('for successfully completing', { align: 'center' });
+    // --- "Certificate" title on purple area ---
+    doc.font('Helvetica-Bold').fontSize(56).fillColor('#FFFFFF');
+    doc.text('Certificate', w * 0.38, 50, { width: w * 0.58, align: 'center' });
 
-    doc.moveDown(0.3);
-    doc.font('Helvetica-Bold').fontSize(20).fillColor('#1F2937')
-        .text(`"${data.quiz_title}"`, { align: 'center' });
+    // --- "of Achievement" gold banner straddling purple bottom edge ---
+    const bannerW = 250;
+    const bannerH = 38;
+    const bannerX = w * 0.64 - bannerW / 2;
+    const bannerY = headerBottom - bannerH / 2;
+    doc.save();
+    doc.moveTo(bannerX - 14, bannerY).lineTo(bannerX + bannerW + 14, bannerY)
+       .lineTo(bannerX + bannerW, bannerY + bannerH).lineTo(bannerX, bannerY + bannerH).closePath().fill(gold);
+    doc.restore();
+    doc.font('Helvetica').fontSize(19).fillColor('#FFFFFF');
+    doc.text('of Achievement', bannerX, bannerY + 9, { width: bannerW, align: 'center' });
 
-    doc.moveDown(0.3);
-    doc.font('Helvetica').fontSize(16).fillColor('#4B5563')
-        .text(
-            `with a score of ${data.score} out of ${data.total_questions} (${Math.round((data.score / data.total_questions) * 100)}%)`,
-            { align: 'center' }
-        );
+    // --- "Quiz Engine" branding top-left ---
+    doc.font('Helvetica-Bold').fontSize(16).fillColor(purple);
+    doc.text('Quiz Engine', 50, h * 0.19, { width: 220 });
+    doc.font('Helvetica').fontSize(8.5).fillColor('#888888');
+    doc.text('Assessment Platform', 50, h * 0.19 + 20, { width: 220 });
 
-    doc.moveDown(1.5);
+    // --- Left side content ---
+    const contentX = 50;
+    const contentW = w * 0.52;
+    let curY = h * 0.42;
+
+    // "This is to certify that"
+    doc.font('Helvetica').fontSize(13).fillColor('#666666');
+    doc.text('This is to certify that', contentX, curY, { width: contentW });
+    curY += 28;
+
+    // Candidate name - sized to fit
+    const nameText = data.candidate_name.toUpperCase();
+    const nameFontSize = nameText.length > 24 ? 22 : nameText.length > 18 ? 26 : nameText.length > 14 ? 30 : 34;
+    doc.font('Helvetica-Bold').fontSize(nameFontSize).fillColor(darkText);
+    doc.text(nameText, contentX, curY, { width: contentW });
+    curY += nameFontSize + 10;
+
+    // Gold underline beneath name
+    doc.save();
+    doc.moveTo(contentX, curY).lineTo(contentX + Math.min(380, contentW - 10), curY).lineWidth(2).strokeColor(gold).stroke();
+    doc.restore();
+    curY += 18;
+
+    // Description text
+    const percentage = Math.round((data.score / data.total_questions) * 100);
+    doc.font('Helvetica').fontSize(12).fillColor('#444444');
+    doc.text(
+        `has successfully completed the quiz "${data.quiz_title}" with a score of ${data.score} out of ${data.total_questions} (${percentage}%).`,
+        contentX, curY, { width: contentW - 20, lineGap: 5 }
+    );
+
+    // --- Gold seal on the right (larger, more rings) ---
+    const sealX = w * 0.74;
+    const sealY = h * 0.52;
+    const sealR = 44;
+    doc.save();
+    doc.circle(sealX, sealY, sealR + 12).lineWidth(2.5).strokeColor(gold).stroke();
+    doc.circle(sealX, sealY, sealR + 7).lineWidth(1).strokeColor(gold).stroke();
+    doc.circle(sealX, sealY, sealR + 3).lineWidth(0.5).strokeColor(gold).stroke();
+    doc.circle(sealX, sealY, sealR).fill(gold);
+    doc.restore();
+    // Year inside seal
+    const year = new Date(data.date_taken).getFullYear().toString();
+    doc.font('Helvetica-Bold').fontSize(18).fillColor('#FFFFFF');
+    doc.text(year, sealX - 30, sealY - 10, { width: 60, align: 'center' });
+
+    // --- Date badge on the right ---
     const dateString = new Date(data.date_taken).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+        year: 'numeric', month: 'long', day: 'numeric'
     });
-    doc.font('Helvetica').fontSize(12).fillColor('#9CA3AF')
-        .text(`Issued on ${dateString}`, { align: 'center' });
+    const dateBadgeW = 210;
+    const dateBadgeH = 30;
+    const dateBadgeX = w * 0.74 - dateBadgeW / 2;
+    const dateBadgeY = h * 0.66;
+    doc.save();
+    doc.moveTo(dateBadgeX - 12, dateBadgeY).lineTo(dateBadgeX + dateBadgeW + 12, dateBadgeY)
+       .lineTo(dateBadgeX + dateBadgeW, dateBadgeY + dateBadgeH).lineTo(dateBadgeX, dateBadgeY + dateBadgeH).closePath().fill(gold);
+    doc.restore();
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(purple);
+    doc.text(dateString, dateBadgeX, dateBadgeY + 8, { width: dateBadgeW, align: 'center' });
 
-    doc.moveDown(0.3);
-    doc.font('Helvetica').fontSize(10).fillColor('#D1D5DB')
-        .text(`Certificate ID: QE-${resultId}-${Date.now().toString(36).toUpperCase()}`, { align: 'center' });
+    // --- Certificate ID in bottom gold bar ---
+    const certId = `QE-${resultId}-${Date.now().toString(36).toUpperCase()}`;
+    doc.font('Helvetica-Bold').fontSize(7.5).fillColor('#FFFFFF');
+    doc.text(`CERTIFICATE NO: ${certId}`, w * 0.56, h - 28, { width: w * 0.40, align: 'center' });
 
     doc.end();
 }));

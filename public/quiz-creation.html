@@ -72,7 +72,46 @@
                         </select>
                     </div>
 
-                    <button type="submit" class="btn btn-primary" id="add-question-btn">➕ Add Question</button>
+                    <button type="submit" class="btn btn-primary" id="add-question-btn">Add Question</button>
+                </form>
+            </div>
+
+            <!-- AI Question Generator -->
+            <div class="ai-generator card">
+                <div class="ai-generator-header">
+                    <h2>AI Question Generator</h2>
+                    <span class="ai-badge">AI Powered</span>
+                </div>
+                <p class="ai-description">Automatically generate quiz questions using AI. Specify the topic, depth, difficulty, and number of questions.</p>
+                <div id="ai-error" class="error-message"></div>
+                <form id="ai-generate-form">
+                    <div class="form-group">
+                        <label for="ai-topic">Topic</label>
+                        <input type="text" id="ai-topic" placeholder="e.g. Photosynthesis, World War II, Python Basics" required>
+                    </div>
+                    <div class="options-grid">
+                        <div class="form-group">
+                            <label for="ai-depth">Topic Depth</label>
+                            <select id="ai-depth" required>
+                                <option value="basic">Basic - Surface level</option>
+                                <option value="intermediate" selected>Intermediate - Moderate detail</option>
+                                <option value="advanced">Advanced - In-depth</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ai-difficulty">Difficulty</label>
+                            <select id="ai-difficulty" required>
+                                <option value="easy">Easy</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="hard">Hard</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="ai-count">Number of Questions (1-20)</label>
+                        <input type="number" id="ai-count" min="1" max="20" value="5" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="ai-generate-btn">Generate Questions</button>
                 </form>
             </div>
 

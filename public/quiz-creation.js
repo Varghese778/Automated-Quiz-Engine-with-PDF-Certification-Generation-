@@ -90,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkTeacherAuth();
     loadCurrentQuiz();
     setupAddQuestionForm();
+    setupAIGenerateForm();
     loadQuestions();
     setupUnsavedChangeTracking();
 });
@@ -204,6 +205,73 @@ function setupAddQuestionForm() {
             isSubmitting = false;
             button.disabled = false;
             button.textContent = '➕ Add Question';
+        }
+    });
+}
+
+function setupAIGenerateForm() {
+    const form = document.getElementById('ai-generate-form');
+    if (!form) return;
+
+    let isGenerating = false;
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        if (isGenerating) return;
+
+        const topic = document.getElementById('ai-topic').value.trim();
+        const depth = document.getElementById('ai-depth').value;
+        const difficulty = document.getElementById('ai-difficulty').value;
+        const numberOfQuestions = parseInt(document.getElementById('ai-count').value, 10);
+
+        const errorDiv = document.getElementById('ai-error');
+        const button = document.getElementById('ai-generate-btn');
+        errorDiv.innerText = '';
+
+        if (!topic || topic.length < 3) {
+            errorDiv.innerText = 'Topic must be at least 3 characters';
+            return;
+        }
+
+        if (topic.length > 200) {
+            errorDiv.innerText = 'Topic must be at most 200 characters';
+            return;
+        }
+
+        if (!numberOfQuestions || numberOfQuestions < 1 || numberOfQuestions > 20) {
+            errorDiv.innerText = 'Number of questions must be between 1 and 20';
+            return;
+        }
+
+        isGenerating = true;
+        button.disabled = true;
+        button.textContent = 'Generating... this may take a moment';
+
+        try {
+            const { response, data } = await requestJson(`/api/quiz/${currentQuizId}/generate-questions`, {
+                method: 'POST',
+                body: JSON.stringify({ topic, depth, difficulty, numberOfQuestions })
+            }, 60000);
+
+            if (!response.ok) {
+                errorDiv.innerText = data?.error || 'Failed to generate questions';
+                return;
+            }
+
+            form.reset();
+            document.getElementById('ai-depth').value = 'intermediate';
+            document.getElementById('ai-difficulty').value = 'medium';
+            document.getElementById('ai-count').value = '5';
+            showToast(data.message || `Generated ${data.count} questions`, 'success');
+            loadQuestions();
+        } catch (error) {
+            errorDiv.innerText = error.name === 'AbortError'
+                ? 'Request timed out. Try fewer questions.'
+                : 'Server error — check your connection';
+        } finally {
+            isGenerating = false;
+            button.disabled = false;
+            button.textContent = 'Generate Questions';
         }
     });
 }

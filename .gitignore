@@ -30,3 +30,8 @@ venv/
 coverage/
 dist/
 build/
+
+# Test/temp artifacts
+test_certificate*.pdf
+nul
+tmpclaude*
