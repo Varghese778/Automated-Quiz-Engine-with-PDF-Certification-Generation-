@@ -1178,7 +1178,7 @@ app.get('/api/certificate/:resultId', rateLimit({ key: 'certificate', maxRequest
     doc.end();
 }));
 
-app.get('/{*splat}', (req, res) => {
+app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) {
         return res.status(404).json({ error: 'Endpoint not found' });
     }
